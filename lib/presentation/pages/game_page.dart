@@ -110,7 +110,6 @@ class GamePage extends ConsumerWidget {
   }
 }
 
-// ---------- ВСПОМОГАТЕЛЬНЫЕ ВИДЖЕТЫ ----------
 
 class _ScorePanel extends StatelessWidget {
   final int score;

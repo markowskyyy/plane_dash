@@ -56,9 +56,7 @@ class TrainingViewModel extends ChangeNotifier {
     }
   }
 
-  // ---------- Настройки ----------
   Future<void> _loadSettings() async {
-    _soundEnabled = await _settingsService.getSoundEnabled();
     _vibrationEnabled = await _settingsService.getVibrationEnabled();
     _sensitivity = await _settingsService.getSensitivity();
   }

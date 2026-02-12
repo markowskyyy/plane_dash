@@ -7,9 +7,9 @@ class Achievement {
   final String id;
   final String title;
   final String description;
-  final int target; // целевое значение
-  final int current; // текущее значение
-  final String iconAsset; // или IconData
+  final int target;
+  final int current;
+  final String iconAsset;
 
   Achievement({
     required this.id,

@@ -5,11 +5,8 @@ class SettingsService {
   static const String _vibrationKey = 'vibration_enabled';
   static const String _sensitivityKey = 'sensitivity';
 
-  // Звук
-  Future<bool> getSoundEnabled() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_soundKey) ?? true;
-  }
+
+
 
   Future<void> setSoundEnabled(bool value) async {
     final prefs = await SharedPreferences.getInstance();

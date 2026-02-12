@@ -10,7 +10,6 @@ import 'package:plane_dash/domain/services/progress_service.dart';
 class GameViewModel extends ChangeNotifier {
   final ProgressService _progressService = ProgressService();
 
-  // ---------- Параметры игры ----------
   Difficulty _difficulty = Difficulty.pilot;
   Difficulty get difficulty => _difficulty;
 
@@ -25,7 +24,6 @@ class GameViewModel extends ChangeNotifier {
     }
   }
 
-  // ---------- Игровое состояние ----------
   bool _isPlaying = false;
   bool get isPlaying => _isPlaying;
 
@@ -35,14 +33,12 @@ class GameViewModel extends ChangeNotifier {
   bool _isGameOver = false;
   bool get isGameOver => _isGameOver;
 
-  // ---------- Игровые параметры ----------
   int _score = 0;
   int get score => _score;
 
   int _starsCollected = 0;
   int get starsCollected => _starsCollected;
 
-  // ---------- Объекты на поле ----------
   static const double planeWidth = 50;
   static const double planeHeight = 50;
   double planeX = 0.0; // центр экрана (будет задано при старте)
@@ -50,11 +46,9 @@ class GameViewModel extends ChangeNotifier {
   final List<Star> stars = [];
   final List<Obstacle> obstacles = [];
 
-  // ---------- Игровой цикл ----------
   Ticker? _ticker;
   Duration _lastTime = Duration.zero;
 
-  // ---------- Флаг загрузки / ошибки ----------
   bool _isLoading = false;
   bool get isLoading => _isLoading;
   String? _error;
@@ -65,15 +59,14 @@ class GameViewModel extends ChangeNotifier {
   }
 
   Future<void> _init() async {
-    // Ничего не загружаем пока
+
   }
 
-  // ---------- Управление игрой ----------
   void startGame({Difficulty? difficulty, required double screenWidth}) {
     if (difficulty != null) _difficulty = difficulty;
 
     _resetGameState();
-    planeX = screenWidth / 2; // стартовая позиция по центру
+    planeX = screenWidth / 2;
     _isPlaying = true;
     _isGameOver = false;
     _isPaused = false;
@@ -219,7 +212,7 @@ class GameViewModel extends ChangeNotifier {
     obstacles.removeWhere((obstacle) => obstacle.y > 800);
   }
 
-  // ---------- Управление самолётом (вызывается из UI) ----------
+
   void movePlaneLeft(double screenWidth) {
     if (!_isPlaying || _isPaused || _isGameOver) return;
     planeX = (planeX - 20).clamp(planeWidth / 2, screenWidth - planeWidth / 2);
@@ -232,7 +225,7 @@ class GameViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ---------- Завершение игры ----------
+
   Future<void> endGame() async {
     if (!_isPlaying || _isGameOver) return;
     _isPlaying = false;
@@ -269,7 +262,7 @@ class GameViewModel extends ChangeNotifier {
     }
   }
 
-  // ---------- Очистка ошибки ----------
+  // Очистка ошибки
   void clearError() {
     _error = null;
     notifyListeners();
@@ -282,7 +275,7 @@ class GameViewModel extends ChangeNotifier {
   }
 }
 
-// ---------- Модели объектов ----------
+// Модели объектов
 class Star {
   double x;
   double y;
