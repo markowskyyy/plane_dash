@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plane_dash/data/consts/design.dart';
 import 'package:plane_dash/presentation/pages/game_page.dart';
+import 'package:plane_dash/presentation/pages/more_page.dart';
 import 'package:plane_dash/presentation/pages/records_page.dart';
 import 'package:plane_dash/presentation/pages/training_page.dart';
 
@@ -20,10 +21,6 @@ final router = GoRouter(
           path: '/game',
           pageBuilder: (context, state) => NoTransitionPage(child: GamePage()),
         ),
-        // GoRoute(
-        //   path: '/garage',
-        //   pageBuilder: (context, state) => NoTransitionPage(child: GaragePage()),
-        // ),
         GoRoute(
           path: '/records',
           pageBuilder: (context, state) => NoTransitionPage(child: RecordsPage()),
@@ -32,10 +29,10 @@ final router = GoRouter(
           path: '/training',
           pageBuilder: (context, state) => NoTransitionPage(child: TrainingPage()),
         ),
-        // GoRoute(
-        //   path: '/profile',
-        //   pageBuilder: (context, state) => NoTransitionPage(child: ProfilePage()),
-        // ),
+        GoRoute(
+          path: '/more',
+          pageBuilder: (context, state) => NoTransitionPage(child: MorePage()),
+        ),
       ],
     ),
   ],
@@ -60,8 +57,8 @@ class ScaffoldWithNavBar extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.flight), label: 'Игра'),
           // BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Гараж'),
           BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Рекорды'),
-          BottomNavigationBarItem(icon: Icon(Icons.track_changes), label: 'Тренировка'),
-          // BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Профиль'),
+          BottomNavigationBarItem(icon: Icon(Icons.track_changes), label: 'Достижения'),
+          BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: 'Ещё'),
         ],
       ),
     );
@@ -71,8 +68,8 @@ class ScaffoldWithNavBar extends StatelessWidget {
     final String location = GoRouterState.of(context).uri.path;
     // if (location.startsWith('/garage')) return 1;
     if (location.startsWith('/records')) return 1;
-    // if (location.startsWith('/training')) return 3;
-    if (location.startsWith('/profile')) return 2;
+    if (location.startsWith('/training')) return 2;
+    if (location.startsWith('/more')) return 3;
     return 0;
   }
 
@@ -81,18 +78,15 @@ class ScaffoldWithNavBar extends StatelessWidget {
       case 0:
         context.go('/game');
         break;
-      // case 1:
-      //   context.go('/garage');
-      //   break;
       case 1:
         context.go('/records');
         break;
       case 2:
         context.go('/training');
         break;
-      // case 4:
-      //   context.go('/profile');
-      //   break;
+      case 3:
+        context.go('/more');
+        break;
     }
   }
 }

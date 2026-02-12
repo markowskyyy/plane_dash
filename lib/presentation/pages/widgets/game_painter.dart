@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
 import 'package:plane_dash/data/consts/design.dart';
-import 'package:plane_dash/presentation/providers/game_provider.dart';
+import 'package:plane_dash/presentation/view_models/game_view_model.dart'; // для Star, Obstacle
 
 class GamePainter extends CustomPainter {
-  final GameState gameState;
+  final double planeX;
+  final ui.Image? planeImage;
+  final List<Star> stars;
+  final List<Obstacle> obstacles;
   final Size screenSize;
 
-  GamePainter({required this.gameState, required this.screenSize});
+  const GamePainter({
+    required this.planeX,
+    required this.planeImage,
+    required this.stars,
+    required this.obstacles,
+    required this.screenSize,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -35,7 +45,7 @@ class GamePainter extends CustomPainter {
 
   void _drawStars(Canvas canvas) {
     final starPaint = Paint()..color = AppColors.starYellow;
-    for (var star in gameState.stars) {
+    for (var star in stars) {
       canvas.drawCircle(Offset(star.x, star.y), 15, starPaint);
       // Блик
       canvas.drawCircle(
@@ -48,7 +58,7 @@ class GamePainter extends CustomPainter {
 
   void _drawObstacles(Canvas canvas) {
     final obstaclePaint = Paint()..color = AppColors.obstacleDark;
-    for (var obs in gameState.obstacles) {
+    for (var obs in obstacles) {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromLTWH(obs.x, obs.y, obs.width, obs.height),
@@ -68,10 +78,21 @@ class GamePainter extends CustomPainter {
   }
 
   void _drawPlane(Canvas canvas) {
-    final planeX = gameState.planeX;
-    const planeY = 600; // фиксированная высота самолёта
+    const planeY = 600.0; // фиксированная высота самолёта
 
-    // Корпус (с размытием для эффекта скорости)
+    if (planeImage != null) {
+      // Рисуем загруженное изображение
+      canvas.drawImage(
+        planeImage!,
+        Offset(planeX - planeImage!.width / 2, planeY - planeImage!.height / 2),
+        Paint(),
+      );
+    } else {
+      _drawFallbackPlane(canvas, planeX, planeY);
+    }
+  }
+
+  void _drawFallbackPlane(Canvas canvas, double x, double y) {
     final planePaint = Paint()
       ..color = AppColors.accentRed
       ..style = PaintingStyle.fill
@@ -79,41 +100,43 @@ class GamePainter extends CustomPainter {
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(planeX - 25, planeY - 20, 50, 40),
+        Rect.fromLTWH(x - 25, y - 20, 50, 40),
         const Radius.circular(12),
       ),
       planePaint,
     );
 
-    // Крылья
     canvas.drawRect(
-      Rect.fromLTWH(planeX - 35, planeY - 5, 70, 10),
+      Rect.fromLTWH(x - 35, y - 5, 70, 10),
       Paint()..color = AppColors.accentRed.withOpacity(0.8),
     );
 
-    // Хвост
     canvas.drawPath(
       Path()
-        ..moveTo(planeX - 15, planeY - 20)
-        ..lineTo(planeX - 25, planeY - 40)
-        ..lineTo(planeX - 5, planeY - 30)
+        ..moveTo(x - 15, y - 20)
+        ..lineTo(x - 25, y - 40)
+        ..lineTo(x - 5, y - 30)
         ..close(),
       Paint()..color = AppColors.accentRed,
     );
 
-    // Кабина
     canvas.drawCircle(
-      Offset(planeX + 10, planeY - 15),
+      Offset(x + 10, y - 15),
       8,
       Paint()..color = Colors.white,
     );
     canvas.drawCircle(
-      Offset(planeX + 12, planeY - 17),
+      Offset(x + 12, y - 17),
       4,
       Paint()..color = Colors.blue,
     );
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant GamePainter oldDelegate) {
+    return oldDelegate.planeX != planeX ||
+        oldDelegate.planeImage != planeImage ||
+        oldDelegate.stars != stars ||
+        oldDelegate.obstacles != obstacles;
+  }
 }

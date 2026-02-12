@@ -1,52 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:plane_dash/data/consts/design.dart';
-import 'package:plane_dash/domain/enums/difficulty.dart';
-import 'package:plane_dash/presentation/providers/training_provider.dart';
+import 'package:plane_dash/presentation/providers/achievements_provider.dart';
 
 class TrainingPage extends ConsumerWidget {
   const TrainingPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final trainingState = ref.watch(trainingProvider);
-    final controller = ref.read(trainingProvider.notifier);
+    final state = ref.watch(achievementsProvider);
+    final controller = ref.read(achievementsProvider.notifier);
 
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(gradient: AppColors.skyGradient),
         child: SafeArea(
-          child: trainingState.isLoading
+          child: state.isLoading
               ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Испытай себя',
-                  style: AppTextStyles.title,
-                ),
-                const SizedBox(height: 16),
-                _buildDifficultyCards(
-                  context,
-                  trainingState,
-                  controller,
-                ),
-                const SizedBox(height: 32),
-                _buildSettingsSection(trainingState, controller),
-                const SizedBox(height: 24),
-                _buildStartButton(context, trainingState, controller),
-                if (trainingState.error != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16),
-                    child: _ErrorBanner(
-                      error: trainingState.error!,
-                      onDismiss: controller.clearError,
-                    ),
+              : RefreshIndicator(
+            onRefresh: () => controller.loadAchievements(),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Заголовок
+                  const Text(
+                    'Мои достижения',
+                    style: AppTextStyles.title,
                   ),
-              ],
+                  const SizedBox(height: 24),
+
+                  // Блок статистики
+                  _buildStatsCard(state),
+                  const SizedBox(height: 24),
+
+                  // Список достижений
+                  const Text(
+                    'Прогресс',
+                    style: AppTextStyles.title,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildAchievementsList(state.achievements),
+
+                  if (state.error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 24),
+                      child: _ErrorBanner(
+                        error: state.error!,
+                        onDismiss: controller.clearError,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -54,208 +61,180 @@ class TrainingPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildDifficultyCards(
-      BuildContext context,
-      TrainingState state,
-      TrainingController controller,
-      ) {
-    return Column(
-      children: [
-        _DifficultyCard(
-          difficulty: Difficulty.novice,
-          bestScore: state.bestScoreNovice,
-          isSelected: state.selectedDifficulty == Difficulty.novice,
-          onTap: () => controller.selectDifficulty(Difficulty.novice),
-        ),
-        const SizedBox(height: 12),
-        _DifficultyCard(
-          difficulty: Difficulty.pilot,
-          bestScore: state.bestScorePilot,
-          isSelected: state.selectedDifficulty == Difficulty.pilot,
-          onTap: () => controller.selectDifficulty(Difficulty.pilot),
-        ),
-        const SizedBox(height: 12),
-        _DifficultyCard(
-          difficulty: Difficulty.ace,
-          bestScore: state.bestScoreAce,
-          isSelected: state.selectedDifficulty == Difficulty.ace,
-          onTap: () => controller.selectDifficulty(Difficulty.ace),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSettingsSection(
-      TrainingState state,
-      TrainingController controller,
-      ) {
+  Widget _buildStatsCard(AchievementsState state) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.panelWhite,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: const [
           BoxShadow(
             color: AppColors.shadow,
-            blurRadius: 8,
-            offset: Offset(0, 2),
+            blurRadius: 12,
+            offset: Offset(0, 4),
           ),
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Настройки',
-            style: AppTextStyles.title,
-          ),
-          const SizedBox(height: 16),
-          SwitchListTile(
-            title: const Text('Звук'),
-            value: state.soundEnabled,
-            onChanged: controller.toggleSound,
-            activeColor: AppColors.accentRed,
-            contentPadding: EdgeInsets.zero,
-          ),
-          SwitchListTile(
-            title: const Text('Вибрация'),
-            value: state.vibrationEnabled,
-            onChanged: controller.toggleVibration,
-            activeColor: AppColors.accentRed,
-            contentPadding: EdgeInsets.zero,
-          ),
-          ListTile(
-            title: const Text('Чувствительность управления'),
-            contentPadding: EdgeInsets.zero,
-            subtitle: Slider(
-              value: state.sensitivity,
-              onChanged: controller.updateSensitivity,
-              min: 0,
-              max: 1,
-              divisions: 10,
-              label: '${(state.sensitivity * 100).round()}%',
-              activeColor: AppColors.accentRed,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _StatItem(
+                icon: const Icon(Icons.star, color: AppColors.starYellow, size: 32),
+                label: 'Звёзды',
+                value: '${state.totalStars}',
+              ),
+              _StatItem(
+                icon: const Icon(Icons.flight, color: AppColors.accentRed, size: 32),
+                label: 'Полёты',
+                value: '${state.totalFlights}',
+              ),
+              _StatItem(
+                icon: const Icon(Icons.emoji_events, color: AppColors.accentRed, size: 32),
+                label: 'Рекорд',
+                value: '${state.bestScore}',
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStartButton(
-      BuildContext context,
-      TrainingState state,
-      TrainingController controller,
-      ) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: state.selectedDifficulty != null
-            ? () {
-          // Переход на GamePage с выбранной сложностью
-          context.go('/game?difficulty=${state.selectedDifficulty!.index}');
-        }
-            : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.accentRed,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+  Widget _buildAchievementsList(List<Achievement> achievements) {
+    return Column(
+      children: achievements.map((achievement) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.panelWhite,
+            borderRadius: BorderRadius.circular(16),
+            border: achievement.isCompleted
+                ? Border.all(color: AppColors.starYellow, width: 2)
+                : null,
+            boxShadow: const [
+              BoxShadow(
+                color: AppColors.shadow,
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
           ),
-          disabledBackgroundColor: Colors.grey,
-        ),
-        child: const Text(
-          'НАЧАТЬ ТРЕНИРОВКУ',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-      ),
+          child: Row(
+            children: [
+              // Иконка
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: achievement.isCompleted
+                      ? AppColors.starYellow.withOpacity(0.2)
+                      : AppColors.accentRed.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    achievement.iconAsset,
+                    style: const TextStyle(fontSize: 28),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Информация
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      achievement.title,
+                      style: AppTextStyles.title.copyWith(fontSize: 16),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      achievement.description,
+                      style: AppTextStyles.body.copyWith(
+                        fontSize: 14,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Прогресс-бар
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: achievement.progress.clamp(0.0, 1.0),
+                        backgroundColor: Colors.grey[300],
+                        valueColor: AlwaysStoppedAnimation(
+                          achievement.isCompleted
+                              ? AppColors.starYellow
+                              : AppColors.accentRed,
+                        ),
+                        minHeight: 6,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Текст прогресса
+                    Text(
+                      '${achievement.current} / ${achievement.target}',
+                      style: AppTextStyles.body.copyWith(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Значок выполнено
+              if (achievement.isCompleted)
+                const Padding(
+                  padding: EdgeInsets.only(left: 8),
+                  child: Icon(
+                    Icons.check_circle,
+                    color: AppColors.starYellow,
+                    size: 28,
+                  ),
+                ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }
 
-class _DifficultyCard extends StatelessWidget {
-  final Difficulty difficulty;
-  final int bestScore;
-  final bool isSelected;
-  final VoidCallback onTap;
+class _StatItem extends StatelessWidget {
+  final Widget icon;
+  final String label;
+  final String value;
 
-  const _DifficultyCard({
-    required this.difficulty,
-    required this.bestScore,
-    required this.isSelected,
-    required this.onTap,
+  const _StatItem({
+    required this.icon,
+    required this.label,
+    required this.value,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.panelWhite,
-          borderRadius: BorderRadius.circular(16),
-          border: isSelected
-              ? Border.all(color: AppColors.accentRed, width: 3)
-              : null,
-          boxShadow: const [
-            BoxShadow(
-              color: AppColors.shadow,
-              blurRadius: 8,
-              offset: Offset(0, 2),
-            ),
-          ],
+    return Column(
+      children: [
+        icon,
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: AppTextStyles.score.copyWith(fontSize: 22),
         ),
-        child: Row(
-          children: [
-            // Иконка сложности
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppColors.accentRed.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: _buildIcon(),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    difficulty.displayName,
-                    style: AppTextStyles.title.copyWith(fontSize: 18),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Лучший счёт: $bestScore',
-                    style: AppTextStyles.body,
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              isSelected ? Icons.check_circle : Icons.arrow_forward_ios,
-              color: isSelected ? AppColors.accentRed : AppColors.darkBlueText,
-            ),
-          ],
+        Text(
+          label,
+          style: AppTextStyles.body.copyWith(
+            fontSize: 14,
+            color: Colors.grey[700],
+          ),
         ),
-      ),
+      ],
     );
-  }
-
-  Widget _buildIcon() {
-    switch (difficulty) {
-      case Difficulty.novice:
-        return const Icon(Icons.slow_motion_video, color: AppColors.accentRed);
-      case Difficulty.pilot:
-        return const Icon(Icons.flight, color: AppColors.accentRed);
-      case Difficulty.ace:
-        return const Icon(Icons.flash_on, color: AppColors.accentRed);
-    }
   }
 }
 

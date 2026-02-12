@@ -1,11 +1,15 @@
 import 'dart:math';
-import 'dart:ui';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
+import 'package:flutter/services.dart';
 import 'package:plane_dash/domain/entities/game_record.dart';
+import 'package:plane_dash/domain/entities/image_loader.dart';
 import 'package:plane_dash/domain/enums/difficulty.dart';
 import 'package:plane_dash/domain/services/progress_service.dart';
 import 'package:plane_dash/domain/services/services_provider.dart';
 import 'package:plane_dash/presentation/view_models/game_view_model.dart';
+import 'package:plane_dash/presentation/providers/records_provider.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -177,7 +181,7 @@ class GameController extends StateNotifier<GameState> {
       await _progressService.updateBestScore(state.score);
 
       final record = GameRecord(
-        playerName: 'Лётчик123',
+        playerName: 'Game player',
         score: state.score,
         starsCollected: state.starsCollected,
         date: DateTime.now(),
@@ -185,6 +189,8 @@ class GameController extends StateNotifier<GameState> {
       );
       await _progressService.saveGameRecord(record);
       await _progressService.updateWeeklyScores(state.score);
+
+      _ref.read(recordsProvider.notifier).loadData();
 
       state = state.copyWith(isLoading: false, error: null);
     } catch (e) {
@@ -263,7 +269,7 @@ class GameController extends StateNotifier<GameState> {
   }
 
   void _checkCollisions() {
-    final planeRect = Rect.fromLTWH(
+    final planeRect = ui.Rect.fromLTWH(
       state.planeX - planeWidth / 2,
       600,
       planeWidth,
@@ -276,7 +282,7 @@ class GameController extends StateNotifier<GameState> {
     int scoreDelta = 0;
 
     for (var star in state.stars) {
-      final starRect = Rect.fromLTWH(star.x, star.y, 30, 30);
+      final starRect = ui.Rect.fromLTWH(star.x, star.y, 30, 30);
       if (planeRect.overlaps(starRect)) {
         starsCollectedDelta++;
         scoreDelta += 10;
@@ -295,7 +301,7 @@ class GameController extends StateNotifier<GameState> {
 
     // Препятствия
     for (var obstacle in state.obstacles) {
-      final obstacleRect = Rect.fromLTWH(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+      final obstacleRect = ui.Rect.fromLTWH(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
       if (planeRect.overlaps(obstacleRect)) {
         endGame();
         break;
@@ -319,4 +325,8 @@ class GameController extends StateNotifier<GameState> {
 // ---------- Провайдер ----------
 final gameProvider = StateNotifierProvider<GameController, GameState>((ref) {
   return GameController(ref);
+});
+
+final planeImageProvider = FutureProvider<ui.Image?>((ref) {
+  return ImageLoader.loadAssetImage('assets/plane.png');
 });

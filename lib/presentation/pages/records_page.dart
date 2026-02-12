@@ -29,6 +29,7 @@ class RecordsPage extends ConsumerWidget {
                   'Лучшие результаты',
                   style: AppTextStyles.title,
                 ),
+                _buildRecordsTable(recordsState.records),
                 const SizedBox(height: 24),
                 _buildStats(recordsState),
                 const SizedBox(height: 24),
