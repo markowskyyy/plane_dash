@@ -85,12 +85,10 @@ class GameState {
   }
 }
 
-// ---------- Контроллер ----------
 class GameController extends StateNotifier<GameState> {
   final Ref _ref;
   late final ProgressService _progressService;
 
-  // Параметры игрового цикла
   Ticker? _ticker;
   Duration _lastTime = Duration.zero;
   double _screenWidth = 0;
@@ -102,7 +100,6 @@ class GameController extends StateNotifier<GameState> {
     _progressService = _ref.read(progressServiceProvider);
   }
 
-  // Геттер скорости в зависимости от сложности
   double get _gameSpeed {
     switch (state.difficulty) {
       case Difficulty.novice:
@@ -152,6 +149,22 @@ class GameController extends StateNotifier<GameState> {
 
     _stopGameLoop();
     _startGameLoop();
+  }
+
+  void movePlaneToX(double targetX, double screenWidth) {
+    if (!state.isPlaying || state.isPaused || state.isGameOver) return;
+
+    final double planeWidth = 60;
+
+
+    final double newX = targetX.clamp(
+      planeWidth / 2,
+      screenWidth - planeWidth / 2,
+    );
+
+    if (newX != state.planeX) {
+      state = state.copyWith(planeX: newX);
+    }
   }
 
   void movePlaneLeft(double screenWidth) {

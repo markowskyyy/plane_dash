@@ -23,13 +23,23 @@ class GameField extends ConsumerWidget {
     );
 
     return GestureDetector(
-      onHorizontalDragUpdate: (details) {
-        if (details.delta.dx < -5) {
-          controller.movePlaneLeft(screenSize.width);
-        } else if (details.delta.dx > 5) {
-          controller.movePlaneRight(screenSize.width);
-        }
-      },
+        onPanDown: (details) {
+          if (gameState.isPlaying && !gameState.isPaused && !gameState.isGameOver) {
+            controller.movePlaneToX(details.localPosition.dx, screenSize.width);
+          }
+        },
+        onPanUpdate: (details) {
+          if (gameState.isPlaying && !gameState.isPaused && !gameState.isGameOver) {
+            controller.movePlaneToX(details.localPosition.dx, screenSize.width);
+          }
+        },
+        // onHorizontalDragUpdate: (details) {
+        //   if (details.delta.dx < -5) {
+        //     controller.movePlaneLeft(screenSize.width);
+        //   } else if (details.delta.dx > 5) {
+        //     controller.movePlaneRight(screenSize.width);
+        //   }
+        // },
       onTapDown: (details) {
         final tapX = details.localPosition.dx;
         if (tapX < screenSize.width / 2) {
